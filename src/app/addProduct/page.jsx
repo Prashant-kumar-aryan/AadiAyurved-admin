@@ -3,13 +3,15 @@
 import { useState } from "react";
 
 export default function AddProductPage() {
+  const [productType, setProductType] = useState("product");
+
   const initialFormData = {
     productName: "",
     shortDescription: "",
     category: "",
     subcategory: "",
     price: 0,
-    sizes: [],
+    sizePrices: [], // Array of {size: string, price: number}
     longDescription: "",
     benefits: [],
     features: [],
@@ -21,14 +23,32 @@ export default function AddProductPage() {
     howToUse: "",
     certifications: "",
     faqs: [],
+    localName: "",
+    ayurvedicNames: [],
+    shortIntro: "",
+    keySymptoms: [],
+    ayurvedicCauses: [],
+    treatmentPrinciples: [],
+    effectiveHerbs: [],
+    classicalFormulations: [],
+    precautions: [],
   };
   const [formData, setFormData] = useState(initialFormData);
 
   const [sizeInput, setSizeInput] = useState("");
+  const [priceInput, setPriceInput] = useState("");
   const [benefitInput, setBenefitInput] = useState("");
   const [featureInput, setFeatureInput] = useState("");
   const [faqQuestionInput, setFaqQuestionInput] = useState("");
   const [faqAnswerInput, setFaqAnswerInput] = useState("");
+
+  const [ayurvedicNameInput, setAyurvedicNameInput] = useState("");
+  const [symptomInput, setSymptomInput] = useState("");
+  const [causeInput, setCauseInput] = useState("");
+  const [treatmentInput, setTreatmentInput] = useState("");
+  const [herbInput, setHerbInput] = useState("");
+  const [formulationInput, setFormulationInput] = useState("");
+  const [precautionInput, setPrecautionInput] = useState("");
 
   const [heroImage, setHeroImage] = useState(null);
   const [productImages, setProductImages] = useState([]);
@@ -58,15 +78,32 @@ export default function AddProductPage() {
     if (!formData.category.trim()) newErrors.category = "Category is required";
     if (!formData.subcategory.trim())
       newErrors.subcategory = "Subcategory is required";
-    if (!formData.price) newErrors.price = "Price is required";
+
+    if (productType === "product") {
+      if (formData.sizePrices.length === 0)
+        newErrors.sizePrices =
+          "At least one size-price combination is required";
+    } else {
+      if (!formData.price) newErrors.price = "Price is required";
+    }
+
     if (!heroImage) newErrors.heroImage = "Hero image is required";
 
-    if (formData.sizes.length === 0)
-      newErrors.sizes = "At least one size is required";
     if (formData.benefits.length === 0)
       newErrors.benefits = "At least one benefit is required";
     if (formData.features.length === 0)
       newErrors.features = "At least one feature is required";
+
+    if (productType === "kit") {
+      if (!formData.localName.trim())
+        newErrors.localName = "Local/modern name is required";
+      if (formData.ayurvedicNames.length === 0)
+        newErrors.ayurvedicNames = "At least one Ayurvedic name is required";
+      if (!formData.shortIntro.trim())
+        newErrors.shortIntro = "Short intro is required";
+      if (formData.keySymptoms.length === 0)
+        newErrors.keySymptoms = "At least one key symptom is required";
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -214,7 +251,170 @@ export default function AddProductPage() {
     }
   };
 
+  const addSizePrice = () => {
+    if (sizeInput.trim() && priceInput.trim() && !isNaN(priceInput)) {
+      setFormData((prev) => ({
+        ...prev,
+        sizePrices: [
+          ...prev.sizePrices,
+          { size: sizeInput.trim(), price: Number(priceInput) },
+        ],
+      }));
+      setSizeInput("");
+      setPriceInput("");
+      if (errors.sizePrices) {
+        setErrors((prev) => ({ ...prev, sizePrices: "" }));
+      }
+    }
+  };
+
+  const removeSizePrice = (index) => {
+    setFormData((prev) => ({
+      ...prev,
+      sizePrices: prev.sizePrices.filter((_, i) => i !== index),
+    }));
+  };
+
+  const addAyurvedicName = () => {
+    if (ayurvedicNameInput.trim()) {
+      setFormData((prev) => ({
+        ...prev,
+        ayurvedicNames: [...prev.ayurvedicNames, ayurvedicNameInput.trim()],
+      }));
+      setAyurvedicNameInput("");
+      if (errors.ayurvedicNames) {
+        setErrors((prev) => ({ ...prev, ayurvedicNames: "" }));
+      }
+    }
+  };
+
+  const removeAyurvedicName = (index) => {
+    setFormData((prev) => ({
+      ...prev,
+      ayurvedicNames: prev.ayurvedicNames.filter((_, i) => i !== index),
+    }));
+  };
+
+  const addSymptom = () => {
+    if (symptomInput.trim()) {
+      setFormData((prev) => ({
+        ...prev,
+        keySymptoms: [...prev.keySymptoms, symptomInput.trim()],
+      }));
+      setSymptomInput("");
+      if (errors.keySymptoms) {
+        setErrors((prev) => ({ ...prev, keySymptoms: "" }));
+      }
+    }
+  };
+
+  const removeSymptom = (index) => {
+    setFormData((prev) => ({
+      ...prev,
+      keySymptoms: prev.keySymptoms.filter((_, i) => i !== index),
+    }));
+  };
+
+  const addCause = () => {
+    if (causeInput.trim()) {
+      setFormData((prev) => ({
+        ...prev,
+        ayurvedicCauses: [...prev.ayurvedicCauses, causeInput.trim()],
+      }));
+      setCauseInput("");
+    }
+  };
+
+  const removeCause = (index) => {
+    setFormData((prev) => ({
+      ...prev,
+      ayurvedicCauses: prev.ayurvedicCauses.filter((_, i) => i !== index),
+    }));
+  };
+
+  const addTreatment = () => {
+    if (treatmentInput.trim()) {
+      setFormData((prev) => ({
+        ...prev,
+        treatmentPrinciples: [
+          ...prev.treatmentPrinciples,
+          treatmentInput.trim(),
+        ],
+      }));
+      setTreatmentInput("");
+    }
+  };
+
+  const removeTreatment = (index) => {
+    setFormData((prev) => ({
+      ...prev,
+      treatmentPrinciples: prev.treatmentPrinciples.filter(
+        (_, i) => i !== index
+      ),
+    }));
+  };
+
+  const addHerb = () => {
+    if (herbInput.trim()) {
+      setFormData((prev) => ({
+        ...prev,
+        effectiveHerbs: [...prev.effectiveHerbs, herbInput.trim()],
+      }));
+      setHerbInput("");
+    }
+  };
+
+  const removeHerb = (index) => {
+    setFormData((prev) => ({
+      ...prev,
+      effectiveHerbs: prev.effectiveHerbs.filter((_, i) => i !== index),
+    }));
+  };
+
+  const addFormulation = () => {
+    if (formulationInput.trim()) {
+      setFormData((prev) => ({
+        ...prev,
+        classicalFormulations: [
+          ...prev.classicalFormulations,
+          formulationInput.trim(),
+        ],
+      }));
+      setFormulationInput("");
+    }
+  };
+
+  const removeFormulation = (index) => {
+    setFormData((prev) => ({
+      ...prev,
+      classicalFormulations: prev.classicalFormulations.filter(
+        (_, i) => i !== index
+      ),
+    }));
+  };
+
+  const addPrecaution = () => {
+    if (precautionInput.trim()) {
+      setFormData((prev) => ({
+        ...prev,
+        precautions: [...prev.precautions, precautionInput.trim()],
+      }));
+      setPrecautionInput("");
+    }
+  };
+
+  const removePrecaution = (index) => {
+    setFormData((prev) => ({
+      ...prev,
+      precautions: prev.precautions.filter((_, i) => i !== index),
+    }));
+  };
+
   const handleSubmit = async (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault(); // stops Enter from submitting
+      return;
+    }
     e.preventDefault();
     if (!validateForm()) {
       console.log("Form has errors:", errors);
@@ -243,13 +443,22 @@ export default function AddProductPage() {
         console.log("[v0] Product images uploaded:", productImageUrls);
       }
 
-      // Prepare form data with image URLs
       const finalFormData = {
         ...formData,
+        productType,
         heroImageUrl,
         productImageUrls,
       };
-      finalFormData.price = Number(finalFormData.price);
+
+      if (productType === "product") {
+        // For products, price comes from sizePrices array
+        delete finalFormData.price;
+      } else {
+        // For kits, convert price to number and remove sizePrices
+        finalFormData.price = Number(finalFormData.price);
+        delete finalFormData.sizePrices;
+      }
+
       console.log("[v0] Sending form data to backend:", finalFormData);
 
       // Send to backend API
@@ -269,10 +478,18 @@ export default function AddProductPage() {
       console.log("[v0] Product created successfully:", result);
       setFormData(initialFormData);
       setSizeInput("");
+      setPriceInput("");
       setBenefitInput("");
       setFeatureInput("");
       setFaqQuestionInput("");
       setFaqAnswerInput("");
+      setAyurvedicNameInput("");
+      setSymptomInput("");
+      setCauseInput("");
+      setTreatmentInput("");
+      setHerbInput("");
+      setFormulationInput("");
+      setPrecautionInput("");
       setHeroImage(null);
       setProductImages([]);
       setHeroPreview("");
@@ -280,35 +497,169 @@ export default function AddProductPage() {
       setErrors({});
       setIsUploading(false);
       // Reset form or redirect
-      alert("Product added successfully!");
+      alert(
+        `${productType === "product" ? "Product" : "Kit"} added successfully!`
+      );
     } catch (error) {
       console.error("Error creating product:", error);
-      alert("Error creating product. Please try again.");
+      alert(`Error creating ${productType}. Please try again.`);
     } finally {
       setIsUploading(false);
     }
   };
 
   return (
-    <div className=" text-black min-h-screen bg-gray-50 py-8 font-sans">
+    <div className="text-black min-h-screen bg-gray-50 py-8 font-sans">
       <div className="w-full px-4">
         <div className="bg-white rounded-lg shadow-sm border p-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-8 font-sans">
-            Add New Product
-          </h1>
+          <div className="mb-8">
+            <h1 className="text-2xl font-bold text-gray-900 mb-6 font-sans">
+              Add New {productType === "product" ? "Product" : "Kit"}
+            </h1>
+
+            <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
+              <span className="text-sm font-semibold text-gray-700">Type:</span>
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="productType"
+                    value="product"
+                    checked={productType === "product"}
+                    onChange={(e) => setProductType(e.target.value)}
+                    className="text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="text-sm font-medium">Product</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="productType"
+                    value="kit"
+                    checked={productType === "kit"}
+                    onChange={(e) => setProductType(e.target.value)}
+                    className="text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="text-sm font-medium">Kit</span>
+                </label>
+              </div>
+            </div>
+          </div>
 
           {isUploading && (
             <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
               <div className="flex items-center">
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-3"></div>
                 <span className="text-blue-700 font-medium">
-                  Uploading images and creating product...
+                  Uploading images and creating {productType}...
                 </span>
               </div>
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-8">
+            {productType === "kit" && (
+              <div className="space-y-6">
+                <h2 className="text-lg font-semibold text-gray-900 font-sans">
+                  Condition Information
+                </h2>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2 font-sans">
+                    Local/Modern Name *
+                  </label>
+                  <input
+                    type="text"
+                    name="localName"
+                    value={formData.localName}
+                    onChange={handleInputChange}
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-sans ${
+                      errors.localName ? "border-red-500" : "border-gray-300"
+                    }`}
+                    required
+                  />
+                  {errors.localName && (
+                    <p className="text-red-500 text-sm mt-1 font-medium">
+                      {errors.localName}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2 font-sans">
+                    Ayurvedic Names (Sanskrit terms) *
+                  </label>
+                  <div className="space-y-3">
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={ayurvedicNameInput}
+                        onChange={(e) => setAyurvedicNameInput(e.target.value)}
+                        placeholder="Enter Ayurvedic/Sanskrit name"
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-sans"
+                        onKeyPress={(e) =>
+                          e.key === "Enter" &&
+                          (e.preventDefault(), addAyurvedicName())
+                        }
+                      />
+                      <button
+                        type="button"
+                        onClick={addAyurvedicName}
+                        className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 whitespace-nowrap font-semibold"
+                      >
+                        Add Name
+                      </button>
+                    </div>
+                    {errors.ayurvedicNames && (
+                      <p className="text-red-500 text-sm font-medium">
+                        {errors.ayurvedicNames}
+                      </p>
+                    )}
+                    {formData.ayurvedicNames.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {formData.ayurvedicNames.map((name, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center gap-2 bg-gray-100 px-3 py-2 rounded-md"
+                          >
+                            <span className="text-sm font-medium">{name}</span>
+                            <button
+                              type="button"
+                              onClick={() => removeAyurvedicName(index)}
+                              className="text-red-500 hover:text-red-700 font-bold text-sm"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2 font-sans">
+                    Short Intro (what it is and why it occurs) *
+                  </label>
+                  <textarea
+                    name="shortIntro"
+                    value={formData.shortIntro}
+                    onChange={handleInputChange}
+                    rows={4}
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-sans ${
+                      errors.shortIntro ? "border-red-500" : "border-gray-300"
+                    }`}
+                    required
+                  />
+                  {errors.shortIntro && (
+                    <p className="text-red-500 text-sm mt-1 font-medium">
+                      {errors.shortIntro}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
             <div className="space-y-6">
               <h2 className="text-lg font-semibold text-gray-900 font-sans">
                 Product Images
@@ -352,9 +703,9 @@ export default function AddProductPage() {
                   className="block w-full text-sm text-gray-500 font-sans file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                 />
                 {imagePreviews.length > 0 && (
-                  <div className="mt-4 flex flax-wrap  gap-4">
+                  <div className="mt-4 flex flex-wrap gap-4">
                     {imagePreviews.map((preview, index) => (
-                      <div key={index} className="relative bg-gray-900">
+                      <div key={index} className="relative">
                         <img
                           src={preview || "/placeholder.svg"}
                           alt={`Preview ${index}`}
@@ -381,7 +732,7 @@ export default function AddProductPage() {
 
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2 font-sans">
-                  Product Name *
+                  {productType === "product" ? "Product" : "Kit"} Name *
                 </label>
                 <input
                   type="text"
@@ -465,78 +816,196 @@ export default function AddProductPage() {
                 )}
               </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2 font-sans">
-                  Price (INR) *
-                </label>
-                <input
-                  type="number"
-                  name="price"
-                  value={formData.price}
-                  onChange={handleInputChange}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-sans ${
-                    errors.price ? "border-red-500" : "border-gray-300"
-                  }`}
-                  required
-                />
-                {errors.price && (
-                  <p className="text-red-500 text-sm mt-1 font-medium">
-                    {errors.price}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2 font-sans">
-                  Available Sizes *
-                </label>
-                <div className="space-y-3">
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={sizeInput}
-                      onChange={(e) => setSizeInput(e.target.value)}
-                      placeholder="e.g., 250g, 500g, 1kg"
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-sans"
-                      onKeyPress={(e) =>
-                        e.key === "Enter" && (e.preventDefault(), addSize())
-                      }
-                    />
-                    <button
-                      type="button"
-                      onClick={addSize}
-                      className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 whitespace-nowrap font-semibold"
-                    >
-                      Add Size
-                    </button>
+              {productType === "product" ? (
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2 font-sans">
+                    Size - Price Combinations *
+                  </label>
+                  <div className="space-y-3">
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={sizeInput}
+                        onChange={(e) => setSizeInput(e.target.value)}
+                        placeholder="e.g., 250g, 500g, 1kg"
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-sans"
+                      />
+                      <input
+                        type="number"
+                        value={priceInput}
+                        onChange={(e) => setPriceInput(e.target.value)}
+                        placeholder="Price (INR)"
+                        className="w-32 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-sans"
+                      />
+                      <button
+                        type="button"
+                        onClick={addSizePrice}
+                        className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 whitespace-nowrap font-semibold"
+                      >
+                        Add
+                      </button>
+                    </div>
+                    {errors.sizePrices && (
+                      <p className="text-red-500 text-sm font-medium">
+                        {errors.sizePrices}
+                      </p>
+                    )}
+                    {formData.sizePrices.length > 0 && (
+                      <div className="space-y-2">
+                        {formData.sizePrices.map((item, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center justify-between bg-gray-100 px-3 py-2 rounded-md"
+                          >
+                            <span className="text-sm font-medium">
+                              {item.size} - ₹{item.price}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => removeSizePrice(index)}
+                              className="text-red-500 hover:text-red-700 font-bold text-sm"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  {errors.sizes && (
-                    <p className="text-red-500 text-sm font-medium">
-                      {errors.sizes}
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2 font-sans">
+                    Price (INR) *
+                  </label>
+                  <input
+                    type="number"
+                    name="price"
+                    value={formData.price}
+                    onChange={handleInputChange}
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-sans ${
+                      errors.price ? "border-red-500" : "border-gray-300"
+                    }`}
+                    required
+                  />
+                  {errors.price && (
+                    <p className="text-red-500 text-sm mt-1 font-medium">
+                      {errors.price}
                     </p>
                   )}
-                  {formData.sizes.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {formData.sizes.map((size, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center gap-2 bg-gray-100 px-3 py-2 rounded-md"
-                        >
-                          <span className="text-sm font-medium">{size}</span>
-                          <button
-                            type="button"
-                            onClick={() => removeSize(index)}
-                            className="text-red-500 hover:text-red-700 font-bold text-sm"
-                          >
-                            ×
-                          </button>
-                        </div>
-                      ))}
+                </div>
+              )}
+            </div>
+
+            {productType === "kit" && (
+              <div className="space-y-6">
+                <h2 className="text-lg font-semibold text-gray-900 font-sans">
+                  Symptoms & Causes
+                </h2>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2 font-sans">
+                    Key Symptoms *
+                  </label>
+                  <div className="space-y-3">
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={symptomInput}
+                        onChange={(e) => setSymptomInput(e.target.value)}
+                        placeholder="Enter a key symptom"
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-sans"
+                        onKeyPress={(e) =>
+                          e.key === "Enter" &&
+                          (e.preventDefault(), addSymptom())
+                        }
+                      />
+                      <button
+                        type="button"
+                        onClick={addSymptom}
+                        className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 whitespace-nowrap font-semibold"
+                      >
+                        Add Symptom
+                      </button>
                     </div>
-                  )}
+                    {errors.keySymptoms && (
+                      <p className="text-red-500 text-sm font-medium">
+                        {errors.keySymptoms}
+                      </p>
+                    )}
+                    {formData.keySymptoms.length > 0 && (
+                      <div className="space-y-2">
+                        {formData.keySymptoms.map((symptom, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center gap-2 bg-gray-100 px-3 py-2 rounded-md"
+                          >
+                            <span className="flex-1 text-sm font-medium">
+                              • {symptom}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => removeSymptom(index)}
+                              className="text-red-500 hover:text-red-700 font-bold text-sm"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2 font-sans">
+                    Ayurvedic Causes
+                  </label>
+                  <div className="space-y-3">
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={causeInput}
+                        onChange={(e) => setCauseInput(e.target.value)}
+                        placeholder="Enter an Ayurvedic cause"
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-sans"
+                        onKeyPress={(e) =>
+                          e.key === "Enter" && (e.preventDefault(), addCause())
+                        }
+                      />
+                      <button
+                        type="button"
+                        onClick={addCause}
+                        className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 whitespace-nowrap font-semibold"
+                      >
+                        Add Cause
+                      </button>
+                    </div>
+                    {formData.ayurvedicCauses.length > 0 && (
+                      <div className="space-y-2">
+                        {formData.ayurvedicCauses.map((cause, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center gap-2 bg-gray-100 px-3 py-2 rounded-md"
+                          >
+                            <span className="flex-1 text-sm font-medium">
+                              • {cause}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => removeCause(index)}
+                              className="text-red-500 hover:text-red-700 font-bold text-sm"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
             <div className="space-y-6">
               <h2 className="text-lg font-semibold text-gray-900 font-sans">
@@ -688,6 +1157,213 @@ export default function AddProductPage() {
                 />
               </div>
             </div>
+
+            {productType === "kit" && (
+              <div className="space-y-6">
+                <h2 className="text-lg font-semibold text-gray-900 font-sans">
+                  Ayurvedic Treatment Information
+                </h2>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2 font-sans">
+                    Ayurvedic Treatment Principles
+                  </label>
+                  <div className="space-y-3">
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={treatmentInput}
+                        onChange={(e) => setTreatmentInput(e.target.value)}
+                        placeholder="Enter a treatment principle"
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-sans"
+                        onKeyPress={(e) =>
+                          e.key === "Enter" &&
+                          (e.preventDefault(), addTreatment())
+                        }
+                      />
+                      <button
+                        type="button"
+                        onClick={addTreatment}
+                        className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 whitespace-nowrap font-semibold"
+                      >
+                        Add Principle
+                      </button>
+                    </div>
+                    {formData.treatmentPrinciples.length > 0 && (
+                      <div className="space-y-2">
+                        {formData.treatmentPrinciples.map(
+                          (principle, index) => (
+                            <div
+                              key={index}
+                              className="flex items-center gap-2 bg-gray-100 px-3 py-2 rounded-md"
+                            >
+                              <span className="flex-1 text-sm font-medium">
+                                • {principle}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => removeTreatment(index)}
+                                className="text-red-500 hover:text-red-700 font-bold text-sm"
+                              >
+                                ×
+                              </button>
+                            </div>
+                          )
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2 font-sans">
+                    Effective Ayurvedic Herbs
+                  </label>
+                  <div className="space-y-3">
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={herbInput}
+                        onChange={(e) => setHerbInput(e.target.value)}
+                        placeholder="Enter an effective herb"
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-sans"
+                        onKeyPress={(e) =>
+                          e.key === "Enter" && (e.preventDefault(), addHerb())
+                        }
+                      />
+                      <button
+                        type="button"
+                        onClick={addHerb}
+                        className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 whitespace-nowrap font-semibold"
+                      >
+                        Add Herb
+                      </button>
+                    </div>
+                    {formData.effectiveHerbs.length > 0 && (
+                      <div className="space-y-2">
+                        {formData.effectiveHerbs.map((herb, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center gap-2 bg-gray-100 px-3 py-2 rounded-md"
+                          >
+                            <span className="flex-1 text-sm font-medium">
+                              • {herb}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => removeHerb(index)}
+                              className="text-red-500 hover:text-red-700 font-bold text-sm"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2 font-sans">
+                    Classical Ayurvedic Formulations
+                  </label>
+                  <div className="space-y-3">
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={formulationInput}
+                        onChange={(e) => setFormulationInput(e.target.value)}
+                        placeholder="Enter a classical formulation"
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-sans"
+                        onKeyPress={(e) =>
+                          e.key === "Enter" &&
+                          (e.preventDefault(), addFormulation())
+                        }
+                      />
+                      <button
+                        type="button"
+                        onClick={addFormulation}
+                        className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 whitespace-nowrap font-semibold"
+                      >
+                        Add Formulation
+                      </button>
+                    </div>
+                    {formData.classicalFormulations.length > 0 && (
+                      <div className="space-y-2">
+                        {formData.classicalFormulations.map(
+                          (formulation, index) => (
+                            <div
+                              key={index}
+                              className="flex items-center gap-2 bg-gray-100 px-3 py-2 rounded-md"
+                            >
+                              <span className="flex-1 text-sm font-medium">
+                                • {formulation}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => removeFormulation(index)}
+                                className="text-red-500 hover:text-red-700 font-bold text-sm"
+                              >
+                                ×
+                              </button>
+                            </div>
+                          )
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2 font-sans">
+                    Precautions & Consultation
+                  </label>
+                  <div className="space-y-3">
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={precautionInput}
+                        onChange={(e) => setPrecautionInput(e.target.value)}
+                        placeholder="Enter a precaution or consultation note"
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-sans"
+                        onKeyPress={(e) =>
+                          e.key === "Enter" &&
+                          (e.preventDefault(), addPrecaution())
+                        }
+                      />
+                      <button
+                        type="button"
+                        onClick={addPrecaution}
+                        className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 whitespace-nowrap font-semibold"
+                      >
+                        Add Precaution
+                      </button>
+                    </div>
+                    {formData.precautions.length > 0 && (
+                      <div className="space-y-2">
+                        {formData.precautions.map((precaution, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center gap-2 bg-gray-100 px-3 py-2 rounded-md"
+                          >
+                            <span className="flex-1 text-sm font-medium">
+                              • {precaution}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => removePrecaution(index)}
+                              className="text-red-500 hover:text-red-700 font-bold text-sm"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="space-y-6">
               <h2 className="text-lg font-semibold text-gray-900 font-sans">
@@ -855,10 +1531,12 @@ export default function AddProductPage() {
                     : "bg-green-600 hover:bg-green-700 focus:ring-green-500 text-white"
                 }`}
               >
-                {isUploading ? "Adding Product..." : "Add Product"}
+                {isUploading
+                  ? `Adding ${productType}...`
+                  : `Add ${productType === "product" ? "Product" : "Kit"}`}
               </button>
               {Object.keys(errors).length > 0 && (
-                <div className="text-red-500">
+                <div className="text-red-500 mt-4">
                   <p>The form has errors. Fix them before upload.</p>
                   <ul className="text-red-500 list-disc pl-5">
                     {Object.keys(errors).map((field) => (

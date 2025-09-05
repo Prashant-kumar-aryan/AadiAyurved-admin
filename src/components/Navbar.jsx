@@ -2,12 +2,11 @@ import Link from "next/link";
 
 const navItems = [
   { name: "Dashboard", href: "/dashboard" },
-  { name: "Add Product", href: "/addProduct" },
+  { name: "Add Product/Kit", href: "/addProduct" },
   { name: "Products", href: "/products" },
   { name: "Inventory", href: "/inventory" },
   { name: "Users", href: "/users" },
   { name: "Orders", href: "/orders" },
-  { name: "Blogs", href: "/blogs" },
 ];
 
 export function Navbar() {

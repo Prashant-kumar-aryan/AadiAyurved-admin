@@ -1,39 +1,60 @@
 import mongoose from "mongoose";
 
-const faqSchema = new mongoose.Schema({
-  question: { type: String, required: true },
-  answer: { type: String, required: true },
-});
-
-const productSchema = new mongoose.Schema(
+const ProductSchema = new mongoose.Schema(
   {
-    productName: { type: String, required: true, trim: true },
-    shortDescription: { type: String, required: true, trim: true },
-    category: { type: String, required: true, trim: true },
-    subcategory: { type: String, required: true, trim: true },
-    price: { type: Number, required: true, min: 0 },
+    productName: { type: String, required: true },
+    shortDescription: { type: String, required: true },
+    category: { type: String, required: true },
+    subcategory: { type: String, required: true },
+    price: { type: Number },
+    sizePrices: [
+      {
+        size: { type: String },
+        price: { type: Number },
+      },
+    ],
+    longDescription: { type: String, required: true },
+    benefits: [{ type: String }],
+    features: [{ type: String }],
+    keyIngredients: { type: String },
+    shelfLife: { type: String },
+    manufacturer: { type: String },
+    countryOfOrigin: { type: String },
+    expiryDate: { type: String },
+    howToUse: { type: String },
+    certifications: { type: String },
+    faqs: [
+      {
+        question: { type: String },
+        answer: { type: String },
+      },
+    ],
 
-    sizes: { type: [String], required: true },
-    longDescription: { type: String, trim: true },
-    benefits: { type: [String], required: true },
-    features: { type: [String], required: true },
+    // Ayurveda-specific fields
+    localName: { type: String },
+    ayurvedicNames: [{ type: String }],
+    shortIntro: { type: String },
+    keySymptoms: [{ type: String }],
+    ayurvedicCauses: [{ type: String }],
+    treatmentPrinciples: [{ type: String }],
+    effectiveHerbs: [{ type: String }],
+    classicalFormulations: [{ type: String }],
+    precautions: [{ type: String }],
 
-    keyIngredients: { type: String, trim: true },
-    shelfLife: { type: String, trim: true },
-    manufacturer: { type: String, trim: true },
-    countryOfOrigin: { type: String, trim: true },
-    expiryDate: { type: String, trim: true },
-    howToUse: { type: String, trim: true },
-    certifications: { type: String, trim: true },
-
-    faqs: [faqSchema],
-
-    // Images
+    productType: {
+      type: String,
+      enum: ["product", "kit"],
+      default: "product",
+    },
     heroImageUrl: { type: String, required: true },
-    productImageUrls: { type: [String], default: [] },
+    productImageUrls: [{ type: String }],
+    featured: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
 
-export default mongoose.models.Product ||
-  mongoose.model("Product", productSchema);
+// ✅ Fix for Next.js hot-reload (avoid model overwrite error)
+const Product =
+  mongoose.models.Product || mongoose.model("Product", ProductSchema);
+
+export default Product;

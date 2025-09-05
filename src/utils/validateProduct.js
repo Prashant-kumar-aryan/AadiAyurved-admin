@@ -1,54 +1,33 @@
-export default function validateProductData(data, isUpdate = false) {
+export function validateProductData(data) {
   const errors = [];
 
-  const {
-    productName,
-    shortDescription,
-    category,
-    subcategory,
-    price,
-    sizes,
-    benefits,
-    features,
-    heroImageUrl,
-  } = data;
-
-  // required fields (skip if update and field not provided)
-  if (!isUpdate || productName !== undefined) {
-    if (!productName) errors.push("Product name is required");
-  }
-  if (!isUpdate || shortDescription !== undefined) {
-    if (!shortDescription) errors.push("Short description is required");
-  }
-  if (!isUpdate || category !== undefined) {
-    if (!category) errors.push("Category is required");
-  }
-  if (!isUpdate || subcategory !== undefined) {
-    if (!subcategory) errors.push("Subcategory is required");
-  }
-  if (!isUpdate || price !== undefined) {
-    if (typeof price !== "number" || price <= 0) {
-      errors.push("Price must be a positive number");
-    }
-  }
-  if (!isUpdate || sizes !== undefined) {
-    if (!Array.isArray(sizes) || sizes.length === 0) {
-      errors.push("At least one size is required");
-    }
-  }
-  if (!isUpdate || benefits !== undefined) {
-    if (!Array.isArray(benefits) || benefits.length === 0) {
-      errors.push("At least one benefit is required");
-    }
-  }
-  if (!isUpdate || features !== undefined) {
-    if (!Array.isArray(features) || features.length === 0) {
-      errors.push("At least one feature is required");
-    }
-  }
-  if (!isUpdate || heroImageUrl !== undefined) {
-    if (!heroImageUrl) errors.push("Hero image URL is required");
+  // Common validations
+  if (!data.productName || data.productName.trim().length === 0) {
+    errors.push("Product name is required");
   }
 
-  return errors;
+  if (!data.shortDescription || data.shortDescription.trim().length === 0) {
+    errors.push("Short description is required");
+  }
+
+  if (!data.category || data.category.trim().length === 0) {
+    errors.push("Category is required");
+  }
+
+  if (!data.subcategory || data.subcategory.trim().length === 0) {
+    errors.push("Subcategory is required");
+  }
+
+  if (!data.heroImageUrl || data.heroImageUrl.trim().length === 0) {
+    errors.push("Hero image URL is required");
+  }
+
+  if (!data.productType || !["product", "kit"].includes(data.productType)) {
+    errors.push('Product type must be either "product" or "kit"');
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors,
+  };
 }
