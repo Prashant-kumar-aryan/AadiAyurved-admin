@@ -6,6 +6,7 @@ const ProductSchema = new mongoose.Schema(
     shortDescription: { type: String, required: true },
     category: { type: String, required: true },
     subcategory: { type: String, required: true },
+    microcategory: { type: String },
     price: { type: Number },
     sizePrices: [
       {
@@ -13,13 +14,13 @@ const ProductSchema = new mongoose.Schema(
         price: { type: Number },
       },
     ],
-    longDescription: { type: String, required: true },
+    longDescription: { type: String },
     benefits: [{ type: String }],
     features: [{ type: String }],
     keyIngredients: { type: String },
     shelfLife: { type: String },
     manufacturer: { type: String },
-    countryOfOrigin: { type: String },
+    countryOfOrigin: { type: String, default: "India" },
     expiryDate: { type: String },
     howToUse: { type: String },
     certifications: { type: String },

@@ -9,9 +9,10 @@ export async function PUT(request) {
     const id = searchParams.get("id");
 
     const { featured } = await request.json();
+    const newStatus = !featured;
     const product = await Product.findByIdAndUpdate(
       id,
-      { featured: !featured },
+      { featured: newStatus },
       { new: true }
     );
     if (!product) {

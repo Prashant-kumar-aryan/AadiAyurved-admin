@@ -10,6 +10,7 @@ export default function AddProductPage() {
     shortDescription: "",
     category: "",
     subcategory: "",
+    microcategory: "",
     price: 0,
     sizePrices: [], // Array of {size: string, price: number}
     longDescription: "",
@@ -18,7 +19,7 @@ export default function AddProductPage() {
     keyIngredients: "",
     shelfLife: "",
     manufacturer: "",
-    countryOfOrigin: "",
+    countryOfOrigin: "India",
     expiryDate: "",
     howToUse: "",
     certifications: "",
@@ -88,21 +89,11 @@ export default function AddProductPage() {
     }
 
     if (!heroImage) newErrors.heroImage = "Hero image is required";
-
-    if (formData.benefits.length === 0)
-      newErrors.benefits = "At least one benefit is required";
-    if (formData.features.length === 0)
-      newErrors.features = "At least one feature is required";
-
     if (productType === "kit") {
-      if (!formData.localName.trim())
-        newErrors.localName = "Local/modern name is required";
-      if (formData.ayurvedicNames.length === 0)
-        newErrors.ayurvedicNames = "At least one Ayurvedic name is required";
+      if (!formData.localName.trim() && formData.ayurvedicNames.length === 0)
+        newErrors.localName = "Local/modern name or ayurvedic name is required";
       if (!formData.shortIntro.trim())
         newErrors.shortIntro = "Short intro is required";
-      if (formData.keySymptoms.length === 0)
-        newErrors.keySymptoms = "At least one key symptom is required";
     }
 
     setErrors(newErrors);
@@ -816,6 +807,27 @@ export default function AddProductPage() {
                 )}
               </div>
 
+              {/* suub subcategory */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2 font-sans">
+                  Microcategory
+                </label>
+                <input
+                  type="text"
+                  name="microcategory"
+                  value={formData.microcategory}
+                  onChange={handleInputChange}
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-sans ${
+                    errors.microcategory ? "border-red-500" : "border-gray-300"
+                  }`}
+                />
+                {errors.microcategory && (
+                  <p className="text-red-500 text-sm mt-1 font-medium">
+                    {errors.microcategory}
+                  </p>
+                )}
+              </div>
+
               {productType === "product" ? (
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2 font-sans">
@@ -905,7 +917,7 @@ export default function AddProductPage() {
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2 font-sans">
-                    Key Symptoms *
+                    Key Symptoms
                   </label>
                   <div className="space-y-3">
                     <div className="flex gap-2">
@@ -1027,7 +1039,7 @@ export default function AddProductPage() {
 
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2 font-sans">
-                  Benefits (Key Points) *
+                  Benefits (Key Points)
                 </label>
                 <div className="space-y-3">
                   <div className="flex gap-2">
@@ -1080,7 +1092,7 @@ export default function AddProductPage() {
 
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2 font-sans">
-                  Product Features (Key Points) *
+                  Product Features (Key Points)
                 </label>
                 <div className="space-y-3">
                   <div className="flex gap-2">

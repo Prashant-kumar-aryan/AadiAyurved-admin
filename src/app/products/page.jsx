@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation"; // Added router for navigation
 
 export default function Home() {
   const [products, setProducts] = useState([]);
@@ -8,6 +9,7 @@ export default function Home() {
   const [selectedProductType, setSelectedProductType] = useState("all");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedSubcategory, setSelectedSubcategory] = useState("all");
+  const router = useRouter(); // Initialize router
 
   // Fetch products from API
   useEffect(() => {
@@ -68,6 +70,10 @@ export default function Home() {
       return typeMatch && categoryMatch && subcategoryMatch;
     });
   }, [products, selectedProductType, selectedCategory, selectedSubcategory]);
+
+  const handleProductClick = (productId) => {
+    router.push(`/products/${productId}`);
+  };
 
   if (loading) {
     return (
@@ -153,13 +159,15 @@ export default function Home() {
           {filteredProducts.map((product) => (
             <div
               key={product._id}
-              className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
+              className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" // Added cursor-pointer
+              onClick={() => handleProductClick(product._id)} // Added click handler
             >
               <div className="aspect-square relative overflow-hidden">
                 <img
                   src={
                     product.heroImageUrl ||
-                    "/placeholder.svg?height=300&width=300&query=product"
+                    "/placeholder.svg?height=300&width=300&query=product" ||
+                    "/placeholder.svg"
                   }
                   alt={product.productName}
                   className="w-full h-full object-cover"
@@ -183,7 +191,7 @@ export default function Home() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-lg font-bold text-slate-900">
-                    $
+                    ₹{/* Changed $ to ₹ */}
                     {product.sizePrices && product.sizePrices.length > 0
                       ? product.sizePrices[0].price.toFixed(2)
                       : product.price.toFixed(2)}
