@@ -630,7 +630,8 @@ export default function AddProductPage() {
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2 font-sans">
-                    Short Intro (what it is and why it occurs) *
+                    Condition Short Intro (Diesease what it is and why it
+                    occurs) *
                   </label>
                   <textarea
                     name="shortIntro"
@@ -744,7 +745,7 @@ export default function AddProductPage() {
 
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2 font-sans">
-                  Short Description *
+                  Product Short Description *
                 </label>
                 <textarea
                   name="shortDescription"
@@ -1026,7 +1027,7 @@ export default function AddProductPage() {
 
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2 font-sans">
-                  Long Description
+                  Product Long Description
                 </label>
                 <textarea
                   name="longDescription"
