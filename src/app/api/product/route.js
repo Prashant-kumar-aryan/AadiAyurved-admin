@@ -120,13 +120,31 @@ export async function DELETE(request) {
       );
     }
 
-    const product = await Product.findByIdAndDelete(id);
+    // 🔎 Find product first so we can get image URLs
+    const product = await Product.findById(id);
 
     if (!product) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ message: "Product deleted successfully" });
+    // 🗑️ Collect all images to be deleted
+    const urlsToDelete = [
+      product.heroImageUrl,
+      ...(product.productImageUrls || []),
+    ].filter(Boolean);
+
+    // Delete images from Cloudinary
+    if (urlsToDelete.length > 0) {
+      const deletionResults = await deleteFromCloudinary(urlsToDelete);
+      console.log("Cloudinary deletion results:", deletionResults);
+    }
+
+    // Finally, delete the product from DB
+    await Product.findByIdAndDelete(id);
+
+    return NextResponse.json({
+      message: "Product and images deleted successfully",
+    });
   } catch (error) {
     console.error("Error deleting product:", error);
     return NextResponse.json(
