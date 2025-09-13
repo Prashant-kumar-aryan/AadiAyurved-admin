@@ -1,7 +1,8 @@
-import connectDB from "../../../lib/connectDB.js";
-import Product from "../../../models/Product.js";
-import { validateProductData } from "../../../utils/validateProduct.js";
+import connectDB from "@/lib/connectDB.js";
+import Product from "@/models/Product.js";
+import { validateProductData } from "@/utils/validateProduct.js";
 import { NextResponse } from "next/server";
+import deleteFromCloudinary from "@/lib/CloudinaryDelete.js";
 
 export async function POST(request) {
   try {
@@ -67,8 +68,9 @@ export async function PUT(request) {
     }
 
     const data = await request.json();
+    console.log("Received data for update:", data);
 
-    // Validate the updated product data
+    // Validate product
     const validation = validateProductData(data);
     if (!validation.isValid) {
       return NextResponse.json(
@@ -77,7 +79,15 @@ export async function PUT(request) {
       );
     }
 
-    const product = await Product.findByIdAndUpdate(id, data, {
+    // 🗑️ Handle Cloudinary deletions if toBeDeleted exists
+    if (data.toBeDeleted && Array.isArray(data.toBeDeleted)) {
+      const deletionResults = await deleteFromCloudinary(data.toBeDeleted);
+      console.log("Cloudinary deletion results:", deletionResults);
+    }
+
+    // Update the product
+    const { toBeDeleted, ...updateFields } = data; // exclude toBeDeleted from update
+    const product = await Product.findByIdAndUpdate(id, updateFields, {
       new: true,
       runValidators: true,
     });

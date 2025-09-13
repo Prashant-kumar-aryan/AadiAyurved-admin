@@ -1,8 +1,36 @@
 "use client";
-
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import React from "react";
+
+// Cloudinary upload function
+const uploadToCloudinary = async (file) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append(
+    "upload_preset",
+    process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET
+  );
+  try {
+    const response = await fetch(
+      `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
+      {
+        method: "POST",
+        body: formData,
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Upload failed");
+    }
+
+    const data = await response.json();
+    return data.secure_url;
+  } catch (error) {
+    console.error("Error uploading to Cloudinary:", error);
+    throw error;
+  }
+};
 
 export default function ProductDetailsPage({ params }) {
   const unwrappedParams = React.use(params);
@@ -15,6 +43,12 @@ export default function ProductDetailsPage({ params }) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isTogglingFeature, setIsTogglingFeature] = useState(false);
+
+  const [imagesToDelete, setImagesToDelete] = useState([]);
+  const [newImages, setNewImages] = useState([]);
+  const [newHeroImage, setNewHeroImage] = useState(null);
+  const [deleteHeroImage, setDeleteHeroImage] = useState(false);
+  const [isUploadingImages, setIsUploadingImages] = useState(false);
 
   // Form inputs for editing
   const [benefitInput, setBenefitInput] = useState("");
@@ -60,6 +94,47 @@ export default function ProductDetailsPage({ params }) {
     }));
   };
 
+  const handleHeroImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setNewHeroImage(file);
+      setDeleteHeroImage(false);
+    }
+  };
+
+  const handleProductImagesUpload = (e) => {
+    const files = Array.from(e.target.files);
+    setNewImages((prev) => [...prev, ...files]);
+  };
+
+  const removeNewImage = (index) => {
+    setNewImages((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const markImageForDeletion = (imageUrl) => {
+    setImagesToDelete((prev) => [...prev, imageUrl]);
+  };
+
+  const unmarkImageForDeletion = (imageUrl) => {
+    setImagesToDelete((prev) => prev.filter((url) => url !== imageUrl));
+  };
+
+  const markHeroImageForDeletion = () => {
+    setDeleteHeroImage(true);
+    setNewHeroImage(null);
+  };
+
+  const unmarkHeroImageForDeletion = () => {
+    setDeleteHeroImage(false);
+  };
+
+  const getCurrentProductImages = () => {
+    if (!productData.productImageUrls) return [];
+    return productData.productImageUrls.filter(
+      (url) => !imagesToDelete.includes(url)
+    );
+  };
+
   const handleDelete = async () => {
     try {
       setIsDeleting(true);
@@ -70,7 +145,7 @@ export default function ProductDetailsPage({ params }) {
         throw new Error("Failed to delete product");
       }
       alert("Product deleted successfully!");
-      router.push("/products"); // Redirect to products page
+      router.push("/products");
     } catch (error) {
       console.error("Error deleting product:", error);
       alert("Error deleting product. Please try again.");
@@ -90,7 +165,6 @@ export default function ProductDetailsPage({ params }) {
       if (!response.ok) {
         throw new Error("Failed to toggle feature status");
       }
-      // Update local state
       setProductData((prev) => ({
         ...prev,
         featured: !prev.featured,
@@ -110,21 +184,76 @@ export default function ProductDetailsPage({ params }) {
 
   const handleSave = async () => {
     try {
+      setIsUploadingImages(true);
+
+      // Upload new images to Cloudinary
+      let newHeroImageUrl = null;
+      let newProductImageUrls = [];
+
+      if (newHeroImage) {
+        newHeroImageUrl = await uploadToCloudinary(newHeroImage);
+      }
+
+      if (newImages.length > 0) {
+        const uploadPromises = newImages.map((file) =>
+          uploadToCloudinary(file)
+        );
+        newProductImageUrls = await Promise.all(uploadPromises);
+      }
+
+      // Prepare updated product data
+      const updatedProductData = {
+        ...productData,
+        // Handle hero image
+        heroImageUrl: deleteHeroImage
+          ? null
+          : newHeroImageUrl || productData.heroImageUrl,
+        // Handle product images - keep existing ones not marked for deletion and add new ones
+        productImageUrls: [
+          ...getCurrentProductImages(),
+          ...newProductImageUrls,
+        ],
+        // Add images to be deleted for backend processing
+        toBeDeleted: [
+          ...imagesToDelete,
+          ...(deleteHeroImage && productData.heroImageUrl
+            ? [productData.heroImageUrl]
+            : []),
+        ],
+      };
+
       const response = await fetch(`/api/product?id=${productId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(productData),
+        body: JSON.stringify(updatedProductData),
       });
+
       if (!response.ok) {
         throw new Error("Failed to update product");
       }
+
+      // Reset image states after successful save
+      setImagesToDelete([]);
+      setNewImages([]);
+      setNewHeroImage(null);
+      setDeleteHeroImage(false);
+
+      // Update local product data
+      setProductData((prev) => ({
+        ...prev,
+        heroImageUrl: updatedProductData.heroImageUrl,
+        productImageUrls: updatedProductData.productImageUrls,
+      }));
+
       alert("Product updated successfully!");
       setIsEditing(false);
     } catch (error) {
       console.error("Error updating product:", error);
       alert("Error updating product. Please try again.");
+    } finally {
+      setIsUploadingImages(false);
     }
   };
 
@@ -406,51 +535,237 @@ export default function ProductDetailsPage({ params }) {
                 </span>
                 <button
                   onClick={handleSave}
-                  className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 font-semibold"
+                  disabled={isUploadingImages}
+                  className={`px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 font-semibold ${
+                    isUploadingImages ? "opacity-50 cursor-not-allowed" : ""
+                  }`}
                 >
-                  Save Changes
+                  {isUploadingImages ? "Saving & Uploading..." : "Save Changes"}
                 </button>
               </div>
             </div>
           )}
 
-          {/* Product Images */}
           <div className="space-y-6 mb-8">
             <h2 className="text-lg font-semibold text-gray-900 font-sans">
               Product Images
             </h2>
 
-            {productData.heroImageUrl && (
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2 font-sans">
-                  Hero Image
-                </label>
-                <img
-                  src={productData.heroImageUrl || "/placeholder.svg"}
-                  alt="Hero image"
-                  className="w-32 h-32 object-cover rounded-lg border"
-                />
-              </div>
-            )}
+            {/* Hero Image */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2 font-sans">
+                Hero Image
+              </label>
 
-            {productData.productImageUrls &&
-              productData.productImageUrls.length > 0 && (
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2 font-sans">
-                    Additional Product Images
-                  </label>
-                  <div className="flex flex-wrap gap-4">
-                    {productData.productImageUrls.map((url, index) => (
+              {isEditing ? (
+                <div className="space-y-4">
+                  {/* Current/New Hero Image Display */}
+                  {(productData.heroImageUrl && !deleteHeroImage) ||
+                  newHeroImage ? (
+                    <div className="relative inline-block">
                       <img
-                        key={index}
-                        src={url || "/placeholder.svg"}
-                        alt={`Product image ${index + 1}`}
-                        className="w-32 h-32 object-cover rounded-lg border"
+                        src={
+                          newHeroImage
+                            ? URL.createObjectURL(newHeroImage)
+                            : productData.heroImageUrl
+                        }
+                        alt="Hero image"
+                        className={`w-32 h-32 object-cover rounded-lg border ${
+                          deleteHeroImage ? "opacity-50" : ""
+                        }`}
                       />
-                    ))}
+                      {deleteHeroImage && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-red-500 bg-opacity-75 rounded-lg">
+                          <span className="text-white font-semibold text-sm">
+                            Will be deleted
+                          </span>
+                        </div>
+                      )}
+                      <div className="absolute -top-2 -right-2 flex gap-1">
+                        {!deleteHeroImage ? (
+                          <button
+                            onClick={markHeroImageForDeletion}
+                            className="bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
+                          >
+                            ×
+                          </button>
+                        ) : (
+                          <button
+                            onClick={unmarkHeroImageForDeletion}
+                            className="bg-green-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-green-600"
+                          >
+                            ↶
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center">
+                      <span className="text-gray-500 text-sm">
+                        No hero image
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Hero Image Upload */}
+                  <div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleHeroImageUpload}
+                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Upload a new hero image (will replace current one)
+                    </p>
                   </div>
                 </div>
+              ) : (
+                <div>
+                  {productData.heroImageUrl ? (
+                    <img
+                      src={productData.heroImageUrl || "/placeholder.svg"}
+                      alt="Hero image"
+                      className="w-32 h-32 object-cover rounded-lg border"
+                    />
+                  ) : (
+                    <div className="w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center">
+                      <span className="text-gray-500 text-sm">
+                        No hero image
+                      </span>
+                    </div>
+                  )}
+                </div>
               )}
+            </div>
+
+            {/* Product Images */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2 font-sans">
+                Additional Product Images
+              </label>
+
+              {isEditing ? (
+                <div className="space-y-4">
+                  {/* Current Images */}
+                  {getCurrentProductImages().length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-600 mb-2">
+                        Current Images
+                      </h4>
+                      <div className="flex flex-wrap gap-4">
+                        {productData.productImageUrls?.map((url, index) => {
+                          const isMarkedForDeletion =
+                            imagesToDelete.includes(url);
+                          return (
+                            <div key={index} className="relative">
+                              <img
+                                src={url || "/placeholder.svg"}
+                                alt={`Product image ${index + 1}`}
+                                className={`w-32 h-32 object-cover rounded-lg border ${
+                                  isMarkedForDeletion ? "opacity-50" : ""
+                                }`}
+                              />
+                              {isMarkedForDeletion && (
+                                <div className="absolute inset-0 flex items-center justify-center bg-red-500 bg-opacity-75 rounded-lg">
+                                  <span className="text-white font-semibold text-xs">
+                                    Will be deleted
+                                  </span>
+                                </div>
+                              )}
+                              <div className="absolute -top-2 -right-2">
+                                {!isMarkedForDeletion ? (
+                                  <button
+                                    onClick={() => markImageForDeletion(url)}
+                                    className="bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
+                                  >
+                                    ×
+                                  </button>
+                                ) : (
+                                  <button
+                                    onClick={() => unmarkImageForDeletion(url)}
+                                    className="bg-green-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-green-600"
+                                  >
+                                    ↶
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* New Images */}
+                  {newImages.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-600 mb-2">
+                        New Images (will be uploaded)
+                      </h4>
+                      <div className="flex flex-wrap gap-4">
+                        {newImages.map((file, index) => (
+                          <div key={index} className="relative">
+                            <img
+                              src={
+                                URL.createObjectURL(file) || "/placeholder.svg"
+                              }
+                              alt={`New image ${index + 1}`}
+                              className="w-32 h-32 object-cover rounded-lg border border-green-300"
+                            />
+                            <div className="absolute -top-2 -right-2">
+                              <button
+                                onClick={() => removeNewImage(index)}
+                                className="bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
+                              >
+                                ×
+                              </button>
+                            </div>
+                            <div className="absolute -bottom-2 left-0 right-0">
+                              <span className="bg-green-500 text-white text-xs px-2 py-1 rounded text-center block">
+                                NEW
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Upload New Images */}
+                  <div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handleProductImagesUpload}
+                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Select multiple images to add to the product gallery
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  {productData.productImageUrls &&
+                  productData.productImageUrls.length > 0 ? (
+                    <div className="flex flex-wrap gap-4">
+                      {productData.productImageUrls.map((url, index) => (
+                        <img
+                          key={index}
+                          src={url || "/placeholder.svg"}
+                          alt={`Product image ${index + 1}`}
+                          className="w-32 h-32 object-cover rounded-lg border"
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-gray-500">No additional images</p>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Kit-specific fields */}
