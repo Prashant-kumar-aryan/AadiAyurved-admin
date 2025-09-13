@@ -2,7 +2,7 @@ import connectDB from "@/lib/connectDB.js";
 import Product from "@/models/Product.js";
 import { validateProductData } from "@/utils/validateProduct.js";
 import { NextResponse } from "next/server";
-import deleteFromCloudinary from "@/lib/cloudinaryDelete";
+import deleteFromCloudinary from "@/utils/cloudinaryDelete";
 
 export async function POST(request) {
   try {
